@@ -152,7 +152,7 @@ export default function MyGigsPage() {
                       {gig.status === 'LIVE' && (
                         <Badge variant="primary">
                           <Users className="w-3 h-3 mr-1" />
-                          {gig.applicationCount || 0} bids
+                          {gig.bidsCount ?? gig.applicationCount ?? 0} bids
                         </Badge>
                       )}
                       {gig.status === 'DRAFT' && (

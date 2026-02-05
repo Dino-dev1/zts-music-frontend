@@ -35,14 +35,14 @@ export default function ClientDashboardPage() {
   const bookedGigs = myGigs.filter((g) => g.status === 'BOOKED')
 
   // Calculate total bids across all gigs
-  const totalBids = myGigs.reduce((sum, gig) => sum + (gig.applicationCount || 0), 0)
+  const totalBids = myGigs.reduce((sum, gig) => sum + (gig.bidsCount ?? gig.applicationCount ?? 0), 0)
 
   // Dynamic stats based on real data
   const stats = [
     {
       label: 'Active Gigs',
       value: activeGigs.length.toString(),
-      change: `${activeGigs.filter(g => (g.applicationCount || 0) > 0).length} receiving bids`,
+      change: `${activeGigs.filter(g => (g.bidsCount ?? g.applicationCount ?? 0) > 0).length} receiving bids`,
       icon: FileText,
       color: 'text-violet-400',
       bgColor: 'bg-violet-500/10',
@@ -74,7 +74,7 @@ export default function ClientDashboardPage() {
   ]
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       {/* Welcome Section */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -166,7 +166,7 @@ export default function ClientDashboardPage() {
             </Link>
           </div>
 
-          <div className="space-y-3">
+          <div className="flex flex-col gap-6">
             {gigsLoading ? (
               Array.from({ length: 3 }).map((_, i) => (
                 <GigCardSkeleton key={i} />
@@ -174,7 +174,7 @@ export default function ClientDashboardPage() {
             ) : activeGigs.length > 0 ? (
               activeGigs.slice(0, 3).map((gig) => (
                 <Link key={gig.id} href={`/client/gigs/${gig.id}`}>
-                  <Card variant="elevated" hoverable className="p-4">
+                  <Card variant="elevated" hoverable className="p-5">
                     <div className="flex items-start gap-3">
                       <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-600/20 to-fuchsia-600/20 flex items-center justify-center text-2xl shrink-0">
                         {getCategoryIcon(gig.category)}
@@ -194,7 +194,7 @@ export default function ClientDashboardPage() {
                             {formatCurrency(gig.budget?.max)}
                           </span>
                           <Badge variant="primary" size="sm">
-                            {gig.applicationCount || 0} bids
+                            {gig.bidsCount ?? gig.applicationCount ?? 0} bids
                           </Badge>
                         </div>
                       </div>
@@ -224,14 +224,14 @@ export default function ClientDashboardPage() {
             <h2 className="text-lg font-semibold text-foreground">Gigs with Bids</h2>
           </div>
 
-          <div className="space-y-3">
-            {activeGigs.filter(g => (g.applicationCount || 0) > 0).length > 0 ? (
+          <div className="flex flex-col gap-6">
+            {activeGigs.filter(g => (g.bidsCount ?? g.applicationCount ?? 0) > 0).length > 0 ? (
               activeGigs
-                .filter(g => (g.applicationCount || 0) > 0)
+                .filter(g => (g.bidsCount ?? g.applicationCount ?? 0) > 0)
                 .slice(0, 3)
                 .map((gig) => (
                   <Link key={gig.id} href={`/client/gigs/${gig.id}`}>
-                    <Card variant="elevated" hoverable className="p-4">
+                    <Card variant="elevated" hoverable className="p-5">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-600/20 to-fuchsia-600/20 flex items-center justify-center text-xl shrink-0">
                           {getCategoryIcon(gig.category)}
@@ -244,7 +244,7 @@ export default function ClientDashboardPage() {
                         </div>
                         <div className="text-right">
                           <Badge variant="primary" size="sm">
-                            {gig.applicationCount} bids
+                            {gig.bidsCount ?? gig.applicationCount ?? 0} bids
                           </Badge>
                           <p className="text-xs text-foreground-subtle mt-1">Review now</p>
                         </div>
@@ -276,7 +276,7 @@ export default function ClientDashboardPage() {
             <h2 className="text-lg font-semibold text-foreground">Upcoming Events</h2>
           </div>
 
-          <div className="space-y-3">
+          <div className="flex flex-col gap-6">
             {bookedGigs.slice(0, 2).map((gig) => (
               <Link key={gig.id} href={`/client/gigs/${gig.id}`}>
                 <Card variant="gradient" hoverable className="p-6">

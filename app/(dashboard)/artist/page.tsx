@@ -93,7 +93,7 @@ export default function ArtistDashboardPage() {
   ]
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       {/* Welcome Section */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -165,7 +165,7 @@ export default function ArtistDashboardPage() {
             </Link>
           </div>
 
-          <div className="space-y-3">
+          <div className="flex flex-col gap-6">
             {bidsLoading ? (
               Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="animate-shimmer h-24 rounded-xl" />
@@ -225,7 +225,7 @@ export default function ArtistDashboardPage() {
             </Link>
           </div>
 
-          <div className="space-y-3">
+          <div className="flex flex-col gap-6">
             {gigsLoading ? (
               Array.from({ length: 3 }).map((_, i) => (
                 <GigCardSkeleton key={i} />
@@ -250,7 +250,7 @@ export default function ArtistDashboardPage() {
                             Up to {formatCurrency(gig.budget?.max)}
                           </span>
                           <Badge variant="default" size="sm">
-                            {gig.applicationCount || 0} bids
+                            {gig.bidsCount ?? gig.applicationCount ?? 0} bids
                           </Badge>
                         </div>
                       </div>
@@ -289,7 +289,7 @@ export default function ArtistDashboardPage() {
         {eventsLoading ? (
           <div className="animate-shimmer h-32 rounded-xl" />
         ) : acceptedGigs.length > 0 ? (
-          <div className="space-y-3">
+          <div className="flex flex-col gap-6">
             {acceptedGigs.slice(0, 2).map((bid) => (
               <Link key={bid.id} href={`/artist/bids/${bid.id}`}>
                 <Card variant="gradient" hoverable className="p-6">

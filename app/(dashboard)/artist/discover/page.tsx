@@ -11,11 +11,12 @@ import {
   Calendar,
   X,
   ChevronDown,
+  ArrowUpDown,
 } from 'lucide-react'
 import Link from 'next/link'
-import { Card, Button, Input, Badge, StatusBadge, GigCardSkeleton, EmptyState } from '@/components/ui'
-import { gigsApi } from '@/lib/api'
-import { formatCurrency, formatEventDate, getCategoryIcon, getCategoryLabel, cn } from '@/lib/utils'
+import { Card, Button, Badge, GigCardSkeleton, EmptyState } from '@/components/ui'
+import { gigsApi, bidsApi } from '@/lib/api'
+import { formatCurrency, formatEventDate, getCategoryIcon, getCategoryLabel } from '@/lib/utils'
 import type { GigCategory, GigListItem } from '@/lib/types'
 
 const categories: GigCategory[] = [
@@ -41,10 +42,18 @@ export default function DiscoverGigsPage() {
   const [minBudget, setMinBudget] = useQueryState('minBudget', parseAsInteger)
   const [maxBudget, setMaxBudget] = useQueryState('maxBudget', parseAsInteger)
   const [page, setPage] = useQueryState('page', parseAsInteger.withDefault(1))
+  const [sortBy, setSortBy] = useQueryState('sortBy', parseAsString)
 
-  // Fetch gigs with filters
+  // Fetch gig IDs where artist has already placed bids
+  const { data: appliedGigIds } = useQuery({
+    queryKey: ['bids', 'my', 'gig-ids'],
+    queryFn: () => bidsApi.getMyGigIds(),
+    staleTime: 30000, // Cache for 30 seconds
+  })
+
+  // Fetch gigs with filters, excluding already applied gigs
   const { data, isLoading, isFetching } = useQuery({
-    queryKey: ['gigs', 'discover', { city, category, minBudget, maxBudget, page }],
+    queryKey: ['gigs', 'discover', { city, category, minBudget, maxBudget, page, sortBy, appliedGigIds }],
     queryFn: () =>
       gigsApi.getAll({
         status: 'LIVE',
@@ -54,7 +63,10 @@ export default function DiscoverGigsPage() {
         maxBudget: maxBudget || undefined,
         page,
         limit: 12,
+        excludeGigs: appliedGigIds?.length ? appliedGigIds.join(',') : undefined,
+        sortBy: (sortBy as 'date' | 'budget' | 'city' | 'createdAt') || undefined,
       }),
+    enabled: appliedGigIds !== undefined, // Wait for appliedGigIds to be fetched
   })
 
   // Fetch available cities
@@ -122,7 +134,7 @@ export default function DiscoverGigsPage() {
               className="overflow-hidden"
             >
               <Card variant="elevated" className="p-4">
-                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
                   {/* City Filter */}
                   <div>
                     <label className="block text-sm font-medium text-foreground-muted mb-2">
@@ -193,6 +205,27 @@ export default function DiscoverGigsPage() {
                       onChange={(e) => setMaxBudget(e.target.value ? parseInt(e.target.value) : null)}
                       className="w-full h-10 px-4 rounded-lg bg-surface border border-white/10 text-foreground placeholder:text-foreground-subtle focus:border-violet-500 outline-none"
                     />
+                  </div>
+
+                  {/* Sort By */}
+                  <div>
+                    <label className="block text-sm font-medium text-foreground-muted mb-2">
+                      Sort By
+                    </label>
+                    <div className="relative">
+                      <ArrowUpDown className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground-subtle" />
+                      <select
+                        value={sortBy || ''}
+                        onChange={(e) => setSortBy(e.target.value || null)}
+                        className="w-full h-10 pl-10 pr-8 rounded-lg bg-surface border border-white/10 text-foreground appearance-none cursor-pointer focus:border-violet-500 outline-none"
+                      >
+                        <option value="">Newest First</option>
+                        <option value="date">Event Date</option>
+                        <option value="budget">Budget (High to Low)</option>
+                        <option value="city">City (A-Z)</option>
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground-subtle pointer-events-none" />
+                    </div>
                   </div>
                 </div>
 
@@ -289,7 +322,7 @@ export default function DiscoverGigsPage() {
                           {gig.title}
                         </h3>
                         <Badge variant="default" size="sm">
-                          {gig.applicationCount || 0} bids
+                          {gig.bidsCount ?? gig.applicationCount ?? 0} bids
                         </Badge>
                       </div>
 
@@ -320,26 +353,29 @@ export default function DiscoverGigsPage() {
           </div>
 
           {/* Pagination */}
-          <div className="flex justify-center gap-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              disabled={page === 1}
-              onClick={() => setPage(page - 1)}
-            >
-              Previous
-            </Button>
-            <span className="flex items-center px-4 text-sm text-foreground-muted">
-              Page {page}
-            </span>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => setPage(page + 1)}
-            >
-              Next
-            </Button>
-          </div>
+          {data?.meta && data.meta.totalPages > 1 && (
+            <div className="flex justify-center gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={page === 1}
+                onClick={() => setPage(page - 1)}
+              >
+                Previous
+              </Button>
+              <span className="flex items-center px-4 text-sm text-foreground-muted">
+                Page {page} of {data.meta.totalPages}
+              </span>
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={!data.meta.hasNextPage}
+                onClick={() => setPage(page + 1)}
+              >
+                Next
+              </Button>
+            </div>
+          )}
         </>
       ) : (
         <EmptyState

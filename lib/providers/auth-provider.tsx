@@ -122,8 +122,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Calculate loading state
   // - Loading if we're still checking for a token (initial mount)
-  // - Loading if we have a token and the query is pending or fetching
-  const isLoading = tokenState === 'checking' || (tokenState === 'has-token' && (isPending || isFetching))
+  // - Loading if we have a token and the query is pending (initial fetch only)
+  // Note: Don't use isFetching here - it becomes true during refetch and causes infinite loading
+  const isLoading = tokenState === 'checking' || (tokenState === 'has-token' && isPending && !user)
 
   // Authenticated if we have a user
   const isAuthenticated = !!user

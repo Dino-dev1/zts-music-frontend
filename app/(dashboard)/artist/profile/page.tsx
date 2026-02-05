@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
@@ -14,6 +14,7 @@ import {
   Link as LinkIcon,
   Camera,
   Check,
+  Loader2,
 } from 'lucide-react'
 import { Card, Button, Input, Badge, Avatar } from '@/components/ui'
 import { usersApi } from '@/lib/api'
@@ -54,17 +55,47 @@ export default function ArtistProfilePage() {
   const { user, refetchUser } = useAuth()
   const queryClient = useQueryClient()
   const [isEditing, setIsEditing] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const profile = user?.artistProfile
 
-  // Form state
+  // Profile picture upload mutation
+  const uploadPictureMutation = useMutation({
+    mutationFn: (file: File) => usersApi.uploadProfilePicture(file),
+    onSuccess: async () => {
+      await refetchUser()
+      toast.success('Profile picture updated!')
+    },
+    onError: () => {
+      toast.error('Failed to upload profile picture')
+    },
+  })
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please select an image file')
+        return
+      }
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Image size must be less than 5MB')
+        return
+      }
+      uploadPictureMutation.mutate(file)
+    }
+  }
+
+  // Form state - use undefined instead of 0 for number fields so inputs show as empty
   const [formData, setFormData] = useState({
     stageName: profile?.stageName || '',
     bio: profile?.bio || '',
     genres: profile?.genres || [],
     performanceTypes: profile?.performanceTypes || [],
-    yearsOfExperience: profile?.yearsOfExperience || 0,
-    baseRate: profile?.baseRate || 0,
+    yearsOfExperience: profile?.yearsOfExperience ?? undefined,
+    baseRate: profile?.baseRate ?? undefined,
     city: profile?.location?.city || '',
     instagramHandle: profile?.instagramHandle || '',
   })
@@ -73,6 +104,8 @@ export default function ArtistProfilePage() {
     mutationFn: () =>
       usersApi.updateArtistProfile({
         ...formData,
+        yearsOfExperience: formData.yearsOfExperience || 0,
+        baseRate: formData.baseRate || 0,
         instruments: profile?.instruments || [],
         languages: profile?.languages || ['ENGLISH'],
         location: {
@@ -124,8 +157,23 @@ export default function ArtistProfilePage() {
                 size="2xl"
                 showBorder
               />
-              <button className="absolute -bottom-1 -right-1 p-2 rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white hover:opacity-90 transition-opacity shadow-lg">
-                <Camera className="w-4 h-4" />
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept="image/*"
+                className="hidden"
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadPictureMutation.isPending}
+                className="absolute -bottom-1 -right-1 p-2 rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white hover:opacity-90 transition-opacity shadow-lg disabled:opacity-50"
+              >
+                {uploadPictureMutation.isPending ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Camera className="w-4 h-4" />
+                )}
               </button>
             </div>
 
@@ -227,25 +275,27 @@ export default function ArtistProfilePage() {
                   <Input
                     label="Years of Experience"
                     type="number"
-                    value={formData.yearsOfExperience}
+                    value={formData.yearsOfExperience ?? ''}
                     onChange={(e) =>
                       setFormData({
                         ...formData,
-                        yearsOfExperience: parseInt(e.target.value) || 0,
+                        yearsOfExperience: e.target.value ? parseInt(e.target.value) : undefined,
                       })
                     }
+                    placeholder="0"
                   />
                   <Input
                     label="Base Rate (per gig)"
                     type="number"
-                    value={formData.baseRate}
+                    value={formData.baseRate ?? ''}
                     onChange={(e) =>
                       setFormData({
                         ...formData,
-                        baseRate: parseInt(e.target.value) || 0,
+                        baseRate: e.target.value ? parseInt(e.target.value) : undefined,
                       })
                     }
                     leftIcon={<span className="text-foreground-muted">₹</span>}
+                    placeholder="5000"
                   />
                 </>
               ) : (

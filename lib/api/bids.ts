@@ -128,6 +128,15 @@ export const bidsApi = {
   },
 
   /**
+   * Get IDs of gigs where artist has active bids
+   * Used to filter out already-applied gigs from discover
+   */
+  getMyGigIds: async (): Promise<string[]> => {
+    const response = await apiClient.get<string[]>('/bids/my/gig-ids')
+    return response.data
+  },
+
+  /**
    * Get accepted bids (upcoming events for artist)
    */
   getAcceptedBids: async (): Promise<BidWithStatus[]> => {

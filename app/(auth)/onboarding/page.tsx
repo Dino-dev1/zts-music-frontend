@@ -22,11 +22,18 @@ export default function OnboardingPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user, refetchUser } = useAuth()
-  const role = searchParams.get('role') || user?.role || 'artist'
+
+  // Get role from URL param first, then user role, default to artist
+  const urlRole = searchParams.get('role')
+  const role = urlRole
+    ? urlRole.toLowerCase()
+    : (user?.role?.toLowerCase() || 'artist')
+
+  const isArtist = role === 'artist'
 
   const [step, setStep] = useState(1)
   // Artist: 1 step, Client: 2 steps
-  const totalSteps = role === 'artist' ? 1 : 2
+  const totalSteps = isArtist ? 1 : 2
 
   // Artist form state - simplified to just essentials
   const [artistData, setArtistData] = useState({
@@ -54,6 +61,7 @@ export default function OnboardingPage() {
         instruments: [],
         baseRate: 0,
         languages: ['ENGLISH'],
+        onboardingComplete: true,
       }),
     onSuccess: async () => {
       await refetchUser()
@@ -86,7 +94,7 @@ export default function OnboardingPage() {
       setStep(step + 1)
     } else {
       // Submit
-      if (role === 'artist') {
+      if (isArtist) {
         artistMutation.mutate()
       } else {
         clientMutation.mutate()
@@ -101,7 +109,7 @@ export default function OnboardingPage() {
   }
 
   const canProceed = () => {
-    if (role === 'artist') {
+    if (isArtist) {
       return artistData.stageName.length >= 2 && artistData.city.length >= 2
     } else {
       switch (step) {
@@ -128,7 +136,7 @@ export default function OnboardingPage() {
             Welcome to ZTS Music
           </h1>
           <p className="text-foreground-muted">
-            {role === 'artist'
+            {isArtist
               ? "Let's set up your artist profile"
               : "Let's set up your account"}
           </p>
@@ -163,7 +171,7 @@ export default function OnboardingPage() {
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.3 }}
             >
-              {role === 'artist' ? (
+              {isArtist ? (
                 // Artist: Single step with essentials
                 <div className="space-y-6">
                   <div className="text-center mb-6">

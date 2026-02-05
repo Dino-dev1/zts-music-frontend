@@ -2,7 +2,6 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Bell, Search } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/lib/providers'
 import { useAtom } from 'jotai'
@@ -39,24 +38,10 @@ export function Header() {
           <h1 className="text-lg font-semibold text-foreground">{pageTitle}</h1>
         </div>
 
-        {/* Right side - Actions */}
-        <div className="flex items-center gap-2">
-          {/* Search button */}
-          <button className="p-2.5 rounded-xl hover:bg-white/5 text-foreground-muted hover:text-foreground transition-colors">
-            <Search className="w-5 h-5" />
-          </button>
-
-          {/* Notifications */}
-          <button className="relative p-2.5 rounded-xl hover:bg-white/5 text-foreground-muted hover:text-foreground transition-colors">
-            <Bell className="w-5 h-5" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-violet-500 rounded-full" />
-          </button>
-
-          {/* User avatar (mobile only - desktop shows in sidebar) */}
-          <Link href={user?.role === 'artist' ? '/artist/profile' : '/client/profile'} className="md:hidden">
-            <Avatar src={user?.profilePicture} name={user?.name} size="sm" />
-          </Link>
-        </div>
+        {/* Right side - User avatar (mobile only - desktop shows in sidebar) */}
+        <Link href={user?.role === 'artist' ? '/artist/profile' : '/client/profile'} className="md:hidden">
+          <Avatar src={user?.profilePicture} name={user?.name} size="sm" />
+        </Link>
       </div>
     </header>
   )

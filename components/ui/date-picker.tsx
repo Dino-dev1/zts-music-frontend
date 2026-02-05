@@ -140,7 +140,8 @@ export function DatePicker({
               className={cn(
                 'absolute z-50 mt-2 p-4 rounded-2xl',
                 'bg-surface-elevated border border-white/10',
-                'shadow-xl shadow-black/30'
+                'shadow-xl shadow-black/30',
+                'min-w-[300px] w-max'
               )}
               role="dialog"
               aria-label="Calendar"

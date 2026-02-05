@@ -1,5 +1,8 @@
 import { apiClient } from './client'
 import type { User, UpdateArtistProfileInput } from '@/lib/types'
+import axios from 'axios'
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1'
 
 export const usersApi = {
   getMe: async () => {
@@ -65,5 +68,23 @@ export const usersApi = {
       if (params.limit) searchParams.append('limit', String(params.limit))
     }
     return apiClient.get<User[]>(`/users/artists?${searchParams.toString()}`)
+  },
+
+  // Upload profile picture
+  uploadProfilePicture: async (file: File): Promise<{ url: string }> => {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken')?.replace(/^"|"$/g, '') : null
+
+    const response = await axios.post(`${API_BASE_URL}/users/profile/picture`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    })
+
+    // Handle wrapped response
+    return response.data?.data || response.data
   },
 }

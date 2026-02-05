@@ -40,7 +40,8 @@ export default function FindArtistsPage() {
     queryFn: () => usersApi.getArtists({ search, category, city }),
   })
 
-  const artists = artistsData?.data || []
+  // Backend returns { data: { data: [...], meta: {...} } } due to pagination wrapper
+  const artists = artistsData?.data?.data || artistsData?.data || []
 
   const clearFilters = () => {
     setSearch('')

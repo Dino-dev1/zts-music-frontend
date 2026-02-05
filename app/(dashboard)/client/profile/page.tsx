@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
@@ -13,6 +13,7 @@ import {
   Camera,
   Check,
   Calendar,
+  Loader2,
 } from 'lucide-react'
 import { Card, Button, Input, Badge, Avatar } from '@/components/ui'
 import { usersApi, gigsApi } from '@/lib/api'
@@ -23,6 +24,36 @@ export default function ClientProfilePage() {
   const { user, refetchUser } = useAuth()
   const queryClient = useQueryClient()
   const [isEditing, setIsEditing] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Profile picture upload mutation
+  const uploadPictureMutation = useMutation({
+    mutationFn: (file: File) => usersApi.uploadProfilePicture(file),
+    onSuccess: async () => {
+      await refetchUser()
+      toast.success('Profile picture updated!')
+    },
+    onError: () => {
+      toast.error('Failed to upload profile picture')
+    },
+  })
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please select an image file')
+        return
+      }
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Image size must be less than 5MB')
+        return
+      }
+      uploadPictureMutation.mutate(file)
+    }
+  }
 
   // Fetch gigs to calculate stats
   const { data: gigsData } = useQuery({
@@ -82,8 +113,23 @@ export default function ClientProfilePage() {
                 size="2xl"
                 showBorder
               />
-              <button className="absolute -bottom-1 -right-1 p-2 rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white hover:opacity-90 transition-opacity shadow-lg">
-                <Camera className="w-4 h-4" />
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept="image/*"
+                className="hidden"
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadPictureMutation.isPending}
+                className="absolute -bottom-1 -right-1 p-2 rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white hover:opacity-90 transition-opacity shadow-lg disabled:opacity-50"
+              >
+                {uploadPictureMutation.isPending ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Camera className="w-4 h-4" />
+                )}
               </button>
             </div>
 

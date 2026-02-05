@@ -96,6 +96,7 @@ export interface Gig {
   acceptedBid?: string
   acceptedArtist?: string
   bidsCount?: number
+  applicationCount?: number
   createdAt: string
   updatedAt: string
 }
@@ -104,6 +105,7 @@ export interface Gig {
 export interface GigListItem {
   id: string
   title: string
+  description?: string
   category: GigCategory
   budget: {
     min: number
@@ -117,6 +119,7 @@ export interface GigListItem {
   durationMinutes: number
   status: GigStatus
   applicationCount: number
+  bidsCount?: number
   createdAt: string
 }
 
@@ -277,6 +280,9 @@ export interface GigFilters {
   distance?: number
   page?: number
   limit?: number
+  excludeGigs?: string
+  sortBy?: 'date' | 'budget' | 'city' | 'createdAt'
+  sortOrder?: 'asc' | 'desc'
 }
 
 export interface BidFilters {
@@ -346,6 +352,7 @@ export interface UpdateArtistProfileInput {
   videoLinks?: string[]
   audioSamples?: string[]
   instagramHandle?: string
+  onboardingComplete?: boolean
 }
 
 export interface CreateReviewInput {
