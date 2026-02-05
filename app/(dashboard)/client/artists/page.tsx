@@ -14,6 +14,7 @@ import {
 import { Card, Button, Input, Avatar, Badge } from '@/components/ui'
 import { usersApi } from '@/lib/api'
 import { formatCurrency } from '@/lib/utils'
+import type { User } from '@/lib/types'
 import Link from 'next/link'
 
 const categories = [
@@ -40,8 +41,10 @@ export default function FindArtistsPage() {
     queryFn: () => usersApi.getArtists({ search, category, city }),
   })
 
-  // Backend returns { data: { data: [...], meta: {...} } } due to pagination wrapper
-  const artists = artistsData?.data?.data || artistsData?.data || []
+  // Handle various response formats from API
+  const artists = Array.isArray(artistsData?.data)
+    ? artistsData.data
+    : (artistsData?.data as unknown as { data: User[] })?.data || []
 
   const clearFilters = () => {
     setSearch('')
